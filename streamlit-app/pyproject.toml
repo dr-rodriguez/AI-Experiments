@@ -1,0 +1,10 @@
+[project]
+name = "streamlit-app"
+version = "0.1.0"
+description = "AI Chatbot in Streamlit"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "langchain-ollama>=1.0.0",
+    "streamlit>=1.51.0",
+]
