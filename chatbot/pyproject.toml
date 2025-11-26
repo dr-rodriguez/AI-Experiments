@@ -1,10 +1,9 @@
 [project]
-name = "simple-agent"
+name = "chatbot"
 version = "0.1.0"
-description = "Simple agent using LangChain and Ollama"
+description = "Chatbot using LangChain and Ollama"
 readme = "README.md"
 requires-python = ">=3.13,<3.14"
 dependencies = [
-    "langchain>=1.1.0",
     "langchain-ollama>=1.0.0",
 ]
