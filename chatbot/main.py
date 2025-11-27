@@ -8,7 +8,7 @@ async def chat_loop():
     
     messages = []  # Maintain conversation history
     
-    print("Chat with Llama (type 'exit' to quit):\n")
+    print("Chat with Ollama (type 'exit' or 'quit' to quit):\n")
     
     while True:
         user_input = input("You: ").strip()

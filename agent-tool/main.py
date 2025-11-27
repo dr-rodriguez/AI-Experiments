@@ -7,6 +7,7 @@ from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 
 load_dotenv()
 
+
 @tool
 def get_weather(location: str) -> str:
     """Get the current weather in a given location."""
@@ -15,13 +16,15 @@ def get_weather(location: str) -> str:
 
 # Initialize the model
 model = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
+messages = []  # Maintain conversation history
 
 # Bind tools to the model
 model_with_tools = model.bind_tools([get_weather])
 
+
 async def chatbot_loop(user_query: str):
     """Async chatbot that can call tools."""
-    messages = [HumanMessage(content=user_query)]
+    messages.append(HumanMessage(content=user_query))
     
     # Initial LLM call (async)
     response = await model_with_tools.ainvoke(messages)
@@ -45,12 +48,21 @@ async def chatbot_loop(user_query: str):
         
         # Call model again with tool results (async)
         response = await model_with_tools.ainvoke(messages)
-    
+
+    # Check if content is present in response
+    if not response.content:
+        output = response[0].text
+    else:
+        output = response.content
+
     # Return final response (no more tool calls)
-    return response.content
+    return output
 
 
 async def main():
+
+    print("Chat with Google Generative AI (type 'exit' or 'quit' to quit):\n")
+
     while True:
         user_input = input("You: ").strip()
         
