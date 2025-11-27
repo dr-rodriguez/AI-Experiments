@@ -1,40 +1,64 @@
 import asyncio
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
-from langchain_ollama import ChatOllama
+import os
+from dotenv import load_dotenv
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.tools import tool
+from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 
-async def chat_loop():
-    """Async chatbot that maintains conversation history."""
-    model = ChatOllama(model="llama3.2:3b", base_url="http://localhost:11434")
+load_dotenv()
+
+@tool
+def get_weather(location: str) -> str:
+    """Get the current weather in a given location."""
+    return f"It's always sunny in {location}!"
+
+
+# Initialize the model
+model = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
+
+# Bind tools to the model
+model_with_tools = model.bind_tools([get_weather])
+
+async def chatbot_loop(user_query: str):
+    """Async chatbot that can call tools."""
+    messages = [HumanMessage(content=user_query)]
     
-    messages = []  # Maintain conversation history
+    # Initial LLM call (async)
+    response = await model_with_tools.ainvoke(messages)
     
-    print("Chat with Llama (type 'exit' to quit):\n")
+    # Process tool calls if the model made any
+    while response.tool_calls:
+        tool_map = {"get_weather": get_weather}
+        
+        # Execute all tool calls (you can parallelize this)
+        tool_results = []
+        for tool_call in response.tool_calls:
+            tool = tool_map[tool_call["name"]]
+            result = tool.invoke(tool_call["args"])  # Tool execution itself
+            tool_results.append(ToolMessage(
+                content=result,
+                tool_call_id=tool_call["id"]
+            ))
+        
+        # Add model response and tool results to conversation
+        messages.extend([response, *tool_results])
+        
+        # Call model again with tool results (async)
+        response = await model_with_tools.ainvoke(messages)
     
+    # Return final response (no more tool calls)
+    return response.content
+
+
+async def main():
     while True:
         user_input = input("You: ").strip()
         
         if user_input.lower() in ["exit", "quit"]:
             break
-        
-        # Add user message to history
-        messages.append(HumanMessage(content=user_input))
-        
-        # Stream the response and accumulate chunks
-        full_response = None
-        async for chunk in model.astream(messages):
-            # Sum chunks to reconstruct full message
-            if full_response is None:
-                full_response = chunk
-            else:
-                full_response = full_response + chunk  # Chunks are designed to be added
-            
-            # Print streaming output in real-time
-            print(chunk.content, end="", flush=True)
-        
-        print()  # Newline after response
-        
-        # Store the complete accumulated response
-        messages.append(AIMessage(content=full_response.content))
+
+        response = await chatbot_loop(user_input)
+        print("Assistant:", response)
 
 if __name__ == "__main__":
-    asyncio.run(chat_loop())
+    asyncio.run(main())
