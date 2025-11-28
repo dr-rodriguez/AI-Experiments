@@ -49,11 +49,26 @@ async def chatbot_loop(user_query: str):
         # Call model again with tool results (async)
         response = await model_with_tools.ainvoke(messages)
 
-    # Check if content is present in response
+    # Extract text content from response (it's possible there is a better way to handle this natively with LangChain)
     if not response.content:
-        output = response[0].text
-    else:
+        output = ""
+    elif isinstance(response.content, str):
         output = response.content
+    elif isinstance(response.content, list):
+        # Extract text from list of dictionaries
+        text_parts = []
+        for item in response.content:
+            if isinstance(item, dict) and "text" in item:
+                text_parts.append(item["text"])
+            elif isinstance(item, str):
+                text_parts.append(item)
+        output = " ".join(text_parts) if text_parts else str(response.content)
+    else:
+        # Fallback: convert to string
+        output = str(response.content)
+    
+    # Add to final message to history
+    messages.append(AIMessage(content=output))
 
     # Return final response (no more tool calls)
     return output
