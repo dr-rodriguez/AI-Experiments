@@ -9,8 +9,8 @@ Each directory contains a local venv environment. You can use `uv sync` to insta
 - [x] Simple AI client using LangChain and Ollama
 - [x] CLI chatbot
 - [x] Streamlit app with AI chat
-- [ ] Agent with local tool
-- [ ] Agent with MCP tool
+- [x] Agent with local tool
+- [ ] Agent with external MCP tool
 - [ ] Creating shared RAG with LangChain
 - [ ] Agent with RAG
 
